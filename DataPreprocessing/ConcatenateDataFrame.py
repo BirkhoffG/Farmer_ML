@@ -4,8 +4,6 @@ import io
 from datetime import datetime
 import numpy as np
 
-#%%
-
 
 class ConCatenateDataFrame(object):
     def __init__(self, data_path, crop, export_path="./concatenated_dataset",
@@ -106,74 +104,15 @@ class ConCatenateDataFrame(object):
         return self.price_df, self.volume_df
 
 
-# price_df, volume_df = ConCatenateDataFrame(data_path='./Brinjal', crop='Brinjal').export()
-#
-# print("storing price df...")
-# price_df.to_csv("price_brinjal.csv")
-#
-# print("storing volume df...")
-# volume_df.to_csv("volume_brinjal.csv")
+if __name__ == '__main__':
+    crop = 'Brinjal'
+    path = '../Brinjal'
 
+    price_df, volume_df = ConCatenateDataFrame(data_path=path, crop=crop).export()
 
-#%%
+    print("storing price df...")
+    price_df.to_csv(f"../dataset/price_{crop}.csv")
 
-# price_df = pd.DataFrame(index=pd.date_range('2008-1-1', '2018-12-31'))
-# # price_df = pd.read_csv('./price.csv', index_col=0, parse_dates=True)
-# # price_df = pd.read_csv('./price.csv')
-#
-# #%%
-#
-# def load_file(file):
-#
-#     # state
-#     state = file.split('_')[2]
-#     df = pd.read_csv(f'./data/{file}')
-#     markets = df['Market'].unique()
-#
-#     for market in markets:
-#         market_df = df.iloc[list(np.where(df['Market'] == market)[0])]
-#         market_df = market_df.dropna(subset=['Arrival Date'])
-#         market_df.loc[:, 'Arrival Date'] = pd.to_datetime(market_df['Arrival Date'], format='%d/%m/%Y')
-#         market_df.set_index('Arrival Date', inplace=True)
-#
-#         market = f'{market}_{state}'
-#         # print(f'market: {market}')
-#
-#         if market not in price_df.columns:
-#             price_df[market] = np.nan
-#
-#         # resample market df
-#
-#         market_df = market_df.resample('D').asfreq()
-#         # print(market_df)
-#         # print(f'{price_df[market].loc[market_df.index[0]: market_df.index[-1]]}')
-#         # print(f"{market_df['Modal Price(Rs./Quintal)']}")
-#         price_df[market].loc[market_df.index[0]: market_df.index[-1]] = market_df['Modal Price(Rs./Quintal)'].to_numpy()
-#
-#
-# # load_file('Apr_08_Guja_Brin.csv')
-#
-# # %%
-#
-#
-# def load_data(path):
-#     file_list = os.listdir(path)
-#
-#     for i, file in enumerate(file_list):
-#         # check the crop type
-#         print(f"No.{i}: {file}")
-#         if file.split('_')[3] != 'Brin.csv':
-#             continue
-#         # if file == start_point:
-#         #     start_concate = True
-#         #     continue
-#         # if not start_concate:
-#         #     continue
-#         load_file(f"{file}")
-#         # print(f"finish loading: {file}; ")
-#
-# load_data('./data')
-#
-#%%
-#
+    print("storing volume df...")
+    volume_df.to_csv(f"../dataset/volume_{crop}.csv")
 

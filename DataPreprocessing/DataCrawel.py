@@ -1,3 +1,6 @@
+"""
+Crawler the crop price data from http://agmarknet.gov.in
+"""
 import selenium
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -9,20 +12,6 @@ import time
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
-# checks to see if element exists and returns appropriate boolean
-def checkElementExistsByID(table):
-    try:
-        driver.find_element_by_id("cphBody_gridRecords")
-    except NoSuchElementException:
-        return False
-    return True
-
-
-# checks to see if searching term is present in the dropdown values and returns proper boolean
-def checkElementInDropdown(param, val):
-    inputParam = driver.find_element_by_id(param)
-    return val in inputParam.text
-
 
 # lists of scraped and unscraped pages after algorithm is run
 scrapedPages = []
@@ -32,14 +21,26 @@ url = 'http://agmarknet.gov.in/PriceAndArrivals/DatewiseCommodityReport.aspx'
 
 # creates a webdriver using chrome and navigates to URL
 
-
 chrome_options = Options()
 chrome_options.add_argument("--headless")       # define headless
 
 driver = webdriver.Chrome(options=chrome_options)
 driver.get(url)
 
-#%%
+
+# checks to see if element exists and returns appropriate boolean
+def checkElementExistsByID(table):
+    try:
+        driver.find_element_by_id(table)
+    except NoSuchElementException:
+        return False
+    return True
+
+
+# checks to see if searching term is present in the dropdown values and returns proper boolean
+def checkElementInDropdown(param, val):
+    inputParam = driver.find_element_by_id(param)
+    return val in inputParam.text
 
 
 def process(years, months, states, crops):
@@ -168,34 +169,19 @@ def process(years, months, states, crops):
     # indicates that the program has completed
     print('Done')
 
-#%%
 
+if __name__ == '__main__':
+    years = ['2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018']
 
-# years = ['2008']
-# years = ['2009']
-# years = ['2010']
-# years = ['2011']
-# years = ['2012']
-# years = ['2013']
-# years = ['2014']
-# years = ['2015']
-# years = ['2016']
-# years = ['2017']
-years = ['2018']
-# years = ['2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018']
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+              'August', 'September', 'October', 'November', 'December']
 
-# years = ['2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018']
-months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-          'August', 'September', 'October', 'November', 'December']
-states = ['Andaman and Nicobar', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh',
-          'Chattisgarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
-          'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra',
-          'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'NCT of Delhi', 'Odisha', 'Pondicherry', 'Punjab', 'Rajasthan',
-          'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttrakhand', 'West Bengal']
-crops = ['Brinjal']
-# crops = ['Brinjal', 'Tomato', 'Mango']
+    states = ['Andaman and Nicobar', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chandigarh',
+              'Chattisgarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh',
+              'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala', 'Lakshadweep', 'Madhya Pradesh', 'Maharashtra',
+              'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'NCT of Delhi', 'Odisha', 'Pondicherry', 'Punjab', 'Rajasthan',
+              'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttrakhand', 'West Bengal']
 
-# print(f"{years[0]}")
+    crops = ['Brinjal', 'Tomato', 'Mango']
 
-market_dict = {state[:4]: [] for state in states}
-# process(years, months, states, crops)
+    process(years, months, states, crops)
