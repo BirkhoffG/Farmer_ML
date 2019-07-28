@@ -48,6 +48,7 @@ class LSTM(nn.Module):
                 nn.init.normal_(param.data)
 
 
+
 hidden_num = 8
 
 model = LSTM(inputDim=1, hiddenNum=hidden_num, outputDim=1, layerNum=3)
