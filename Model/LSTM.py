@@ -25,6 +25,7 @@ class LSTM(nn.Module):
         self.fc = nn.Linear(self.hiddenNum, self.outputDim)
 
     def forward(self, x):
+        # x = [batch, input_len, output_len]
         batch_size = x.size(0)
         h0 = torch.zeros(self.layerNum * 1, batch_size, self.hiddenNum)
         c0 = torch.zeros(self.layerNum * 1, batch_size, self.hiddenNum)
@@ -36,7 +37,8 @@ class LSTM(nn.Module):
         output, hn = self.lstm(x, (h0, c0))
 
         #         output = output.view(output.size(0)*output.size(1), output.size(2))
-        fc_output = self.fc(output[:, -1, :])
+        fc_output = self.fc(output.view(-1, output.size(2)))
+        # fc_output = self.fc(output[:, -1, :])
 
         return fc_output
 
@@ -54,3 +56,7 @@ hidden_num = 8
 model = LSTM(inputDim=1, hiddenNum=hidden_num, outputDim=1, layerNum=3)
 model.weight_init()
 model.to(device)
+
+x = torch.rand(size=(64, 90, 1))
+output = model(x)
+print(output.size())
