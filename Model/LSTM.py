@@ -5,7 +5,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class LSTM(nn.Module):
-    def __init__(self, inputDim, hiddenNum, outputDim, seq_len=365, layerNum=3, drop_out=0.):
+    def __init__(self, inputDim, hiddenNum, outputDim, seq_len=90, output_len=30, layerNum=3, drop_out=0.):
 
         super(LSTM, self).__init__()
         # hidden cell numbers
@@ -16,13 +16,18 @@ class LSTM(nn.Module):
         self.outputDim = outputDim
         # layer number
         self.layerNum = layerNum
+        # sequence length
+        self.seq_len = seq_len
+        # output length
+        self.output_len = output_len
+
         # LSTM cell
         self.lstm = nn.LSTM(input_size=self.inputDim, hidden_size=self.hiddenNum,
                             num_layers=self.layerNum, dropout=drop_out,
                             batch_first=True)
 
-        #         print(self.lstm)
         self.fc = nn.Linear(self.hiddenNum, self.outputDim)
+        self.final_fc = nn.Linear(self.seq_len, self.output_len)
 
     def forward(self, x):
         # x = [batch, input_len, output_len]
@@ -37,7 +42,9 @@ class LSTM(nn.Module):
         output, hn = self.lstm(x, (h0, c0))
 
         #         output = output.view(output.size(0)*output.size(1), output.size(2))
-        fc_output = self.fc(output.view(-1, output.size(2)))
+        fc_output = self.fc(output)
+        fc_output = fc_output.squeeze()
+        fc_output = self.final_fc(fc_output)
         # fc_output = self.fc(output[:, -1, :])
 
         return fc_output
