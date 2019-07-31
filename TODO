@@ -5,3 +5,6 @@
 - validate during training process
 - Position-wise feedforward layer
 - Implement multi-head attention layer
+
+Possible ideas:
+1. LSTM -> Attention -> GRU/LSTM -> Attention -> Feedforward NN
