@@ -89,7 +89,7 @@ class ConCatenateDataFrame(object):
                   'Uttar Pradesh', 'Uttrakhand', 'West Bengal']
 
         headers = self.price_df.columns
-        # TODO check if price_df.columns == volume_df.columns
+        # TODO.md check if price_df.columns == volume_df.columns
         new_headers = []
         market_dict = {state[:4]: [] for state in states}
         for head in headers:

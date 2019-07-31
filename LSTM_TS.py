@@ -185,7 +185,7 @@ for epoch in range(epochs):
     for i, (x, y) in enumerate(train_loader):
         epoch_start_time = time.time()
 
-        # TODO train on gpu
+        # TODO.md train on gpu
         # train on gpu
         x, y = x.to(device), y.to(device)
 

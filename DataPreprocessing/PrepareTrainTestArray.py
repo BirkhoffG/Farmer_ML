@@ -75,8 +75,8 @@ if __name__ == '__main__':
     print("Resample volume_df...")
     volume_df = resample(data=volume_df, scale='4d')
 
-    h_train, h_test = 30, 30
-    lag = 90
+    h_train, h_test = 1, 1
+    lag = 10
 
     print("Generating price train/test arr...")
     price_train_x, price_train_y, price_test_x, price_test_y = \
@@ -86,9 +86,10 @@ if __name__ == '__main__':
     volume_train_x, volume_train_y, volume_test_x, volume_test_y = \
         concatenate_array(volume_df, lag, h_train, h_test)
 
-    save_arrays(path='../np_array', feature='price', train_x=price_train_x, train_y=price_train_y,
+    path = '../np_array/train_10_01_test_10_01'
+    save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
                 test_x=price_test_x, test_y=price_test_y)
-    save_arrays(path='../np_array', feature='volume', train_x=volume_train_x, train_y=volume_train_y,
+    save_arrays(path=path, feature='volume', train_x=volume_train_x, train_y=volume_train_y,
                 test_x=volume_test_x, test_y=volume_test_y)
 
 
