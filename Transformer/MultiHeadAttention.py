@@ -58,3 +58,7 @@ class MultiHeadAttention(nn.Module):
         output = self.layer_norm(residual + output)
 
         return output, attention
+
+
+if __name__ == '__main__':
+    atten = MultiHeadAttention()
