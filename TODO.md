@@ -8,3 +8,8 @@
 
 Possible ideas:
 1. LSTM -> Attention -> GRU/LSTM -> Attention -> Feedforward NN
+
+## 2018/7/31
+
+- Try hierarchical attention
+- Try transformer encoder
