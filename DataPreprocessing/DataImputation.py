@@ -3,8 +3,15 @@ import numpy as np
 import pandas as pd
 
 
-def load_file(path, crop):
+def load_file(filename):
+    return pd.read_csv(filename, index_col=0, parse_dates=True, low_memory=False).\
+        replace(to_replace='NR', value=np.NaN, inplace=True)
+
+
+def load_files(path, crop, features=['price', 'volume', 'max_price', 'min_price']):
     print("loading price_df")
+    # TODO
+    price_df = load_file(f'{path}/{features[0]}_{crop}.csv')
     price_df = pd.read_csv(f'{path}price_{crop}.csv', index_col=0, parse_dates=True, low_memory=False)
     print("loading volume_df")
     volume_df = pd.read_csv(f'{path}volume_{crop}.csv', index_col=0, parse_dates=True, low_memory=False)

@@ -55,10 +55,14 @@ class ConCatenateDataFrame(object):
             # print(f'{price_df[market].loc[market_df.index[0]: market_df.index[-1]]}')
             # print(f"{market_df['Modal Price(Rs./Quintal)']}")
             try:
+                # self.price_df[market].loc[market_df.index[0]: market_df.index[-1]] = \
+                #     market_df['Modal Price(Rs./Quintal)'].to_numpy()
+                # self.volume_df[market].loc[market_df.index[0]: market_df.index[-1]] = \
+                #     market_df['Arrivals (Tonnes)'].to_numpy()
                 self.price_df[market].loc[market_df.index[0]: market_df.index[-1]] = \
-                    market_df['Modal Price(Rs./Quintal)'].to_numpy()
+                    market_df['Minimum Price(Rs./Quintal)'].to_numpy()
                 self.volume_df[market].loc[market_df.index[0]: market_df.index[-1]] = \
-                    market_df['Arrivals (Tonnes)'].to_numpy()
+                    market_df['Maximum Price(Rs./Quintal)'].to_numpy()
             except ValueError:
                 print(f"Error Market: {market}")
                 print(f"time length: {market_df.index[0]}: {market_df.index[-1]}")
@@ -106,13 +110,13 @@ class ConCatenateDataFrame(object):
 
 if __name__ == '__main__':
     crop = 'Brinjal'
-    path = '../Brinjal'
+    path = '../Raw Data/Brinjal'
 
-    price_df, volume_df = ConCatenateDataFrame(data_path=path, crop=crop).export()
+    min_df, max_df = ConCatenateDataFrame(data_path=path, crop=crop).export()
 
     print("storing price df...")
-    price_df.to_csv(f"../dataset/price_{crop}.csv")
+    min_df.to_csv(f"../dataset/min_price_{crop}.csv")
 
     print("storing volume df...")
-    volume_df.to_csv(f"../dataset/volume_{crop}.csv")
+    max_df.to_csv(f"../dataset/max_price_{crop}.csv")
 

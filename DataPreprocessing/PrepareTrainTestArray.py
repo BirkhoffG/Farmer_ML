@@ -10,9 +10,9 @@ import os
 from pathlib import Path
 
 
-def load_df(path, crop):
-    return pd.read_csv(f'{path}price_imputed_{crop}.csv', index_col=0, parse_dates=True, low_memory=False), \
-           pd.read_csv(f'{path}volume_imputed_{crop}.csv', index_col=0, parse_dates=True, low_memory=False)
+def load_df(path, crop, features=('price', 'volume')):
+    return pd.read_csv(f'{path}/{features[0]}_imputed_{crop}.csv', index_col=0, parse_dates=True, low_memory=False), \
+           pd.read_csv(f'{path}/{features[1]}_imputed_{crop}.csv', index_col=0, parse_dates=True, low_memory=False)
 
 
 def resample(data: pd.DataFrame, scale):
@@ -68,15 +68,15 @@ def save_arrays(path, feature, train_x, train_y, test_x, test_y):
 
 #%%
 if __name__ == '__main__':
-    price_df, volume_df = load_df(path="../dataset/", crop='Brinjal')
+    min_price_df, max_price_df = load_df(path="../dataset", crop='Brinjal', features=('min_price', 'max_price'))
 
     print("Resample price_df...")
-    price_df = resample(data=price_df, scale='4d')
+    price_df = resample(data=min_price_df, scale='4d')
     print("Resample volume_df...")
-    volume_df = resample(data=volume_df, scale='4d')
+    volume_df = resample(data=max_price_df, scale='4d')
 
     h_train, h_test = 1, 1
-    lag = 10
+    lag = 90
 
     print("Generating price train/test arr...")
     price_train_x, price_train_y, price_test_x, price_test_y = \
@@ -86,10 +86,10 @@ if __name__ == '__main__':
     volume_train_x, volume_train_y, volume_test_x, volume_test_y = \
         concatenate_array(volume_df, lag, h_train, h_test)
 
-    path = '../np_array/train_10_01_test_10_01'
-    save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
+    path = '../np_array/train_90_01_test_90_01_6d'
+    save_arrays(path=path, feature='minimum', train_x=price_train_x, train_y=price_train_y,
                 test_x=price_test_x, test_y=price_test_y)
-    save_arrays(path=path, feature='volume', train_x=volume_train_x, train_y=volume_train_y,
+    save_arrays(path=path, feature='maximum', train_x=volume_train_x, train_y=volume_train_y,
                 test_x=volume_test_x, test_y=volume_test_y)
 
 
