@@ -49,31 +49,40 @@ def concatenate_array(df, lag, h_train, h_test):
 
 def save_arrays(path, feature, train_x, train_y, test_x, test_y):
     try:
-        print(f"saving {path}/{feature[:4]}_train_x.npy")
-        np.save(f"{path}/{feature[:4]}_train_x.npy", train_x)
+        print(f"saving {path}/{feature[:3]}_train_x.npy")
+        np.save(f"{path}/{feature[:3]}_train_x.npy", train_x)
 
-        print(f"saving {path}/{feature[:4]}_train_y.npy")
-        np.save(f"{path}/{feature[:4]}_train_y.npy", train_y)
+        print(f"saving {path}/{feature[:3]}_train_y.npy")
+        np.save(f"{path}/{feature[:3]}_train_y.npy", train_y)
 
-        print(f"saving {path}/{feature[:4]}_test_x.npy")
-        np.save(f"{path}/{feature[:4]}_test_x.npy", test_x)
+        print(f"saving {path}/{feature[:3]}_test_x.npy")
+        np.save(f"{path}/{feature[:3]}_test_x.npy", test_x)
 
-        print(f"saving {path}/{feature[:4]}_test_y.npy")
-        np.save(f"{path}/{feature[:4]}_test_y.npy", test_y)
+        print(f"saving {path}/{feature[:3]}_test_y.npy")
+        np.save(f"{path}/{feature[:3]}_test_y.npy", test_y)
     except FileNotFoundError:
         os.mkdir(path)
         print(f"Create path: {path}")
         save_arrays(path, feature, train_x, train_y, test_x, test_y)
 
 
+def correct_max_min(arr: np.array, max_arr: np.array, min_arr: np.array):
+    return np.where(max_arr > arr, max_arr, arr), np.where(min_arr < arr, min_arr, arr)
+
+
 #%%
 if __name__ == '__main__':
-    min_price_df, max_price_df = load_df(path="../dataset", crop='Brinjal', features=('min_price', 'max_price'))
+    price_df, volume_df = load_df(path="../dataset", crop="Brinjal", features=('price', 'volume'))
+    min_price_df, max_price_df = load_df(path="../dataset", crop='Brinjal', features=('min', 'max'))
 
     print("Resample price_df...")
-    price_df = resample(data=min_price_df, scale='4d')
+    price_df = resample(data=price_df, scale='4d')
     print("Resample volume_df...")
-    volume_df = resample(data=max_price_df, scale='4d')
+    volume_df = resample(data=volume_df, scale='4d')
+    print("Resample max_df...")
+    max_price_df = resample(data=max_price_df, scale='4d')
+    print("Resample min_df...")
+    min_price_df = resample(data=min_price_df, scale='4d')
 
     h_train, h_test = 1, 1
     lag = 90
@@ -86,10 +95,42 @@ if __name__ == '__main__':
     volume_train_x, volume_train_y, volume_test_x, volume_test_y = \
         concatenate_array(volume_df, lag, h_train, h_test)
 
-    path = '../np_array/train_90_01_test_90_01_6d'
-    save_arrays(path=path, feature='minimum', train_x=price_train_x, train_y=price_train_y,
+    print("Generating max price train/test arr... ")
+    max_train_x, max_train_y, max_test_x, max_test_y = \
+        concatenate_array(max_price_df, lag, h_train, h_test)
+
+    print("Generating min price train/test arr... ")
+    min_train_x, min_train_y, min_test_x, min_test_y = \
+        concatenate_array(min_price_df, lag, h_train, h_test)
+
+    print("Correcting train_x arr...")
+    max_train_x, min_train_x = correct_max_min(price_train_x, max_train_x, min_train_x)
+    assert (max_train_x >= price_train_x).all()
+    assert (min_train_x <= price_train_x).all()
+
+    print("Correcting train_y arr...")
+    max_train_y, min_train_y = correct_max_min(price_train_y, max_train_y, min_train_y)
+    assert (max_train_y >= price_train_y).all()
+    assert (min_train_y <= price_train_y).all()
+
+    print("Correcting test_x arr...")
+    max_test_x, min_test_x = correct_max_min(price_test_x, max_test_x, min_test_x)
+    assert (max_test_x >= price_test_x).all()
+    assert (min_test_x <= price_test_x).all()
+
+    print("Correcting test_y arr...")
+    max_test_y, min_test_y = correct_max_min(price_test_y, max_test_y, min_test_y)
+    assert (max_test_y >= price_test_y).all()
+    assert (min_test_y <= price_test_y).all()
+
+    path = '../np_array/train_90_01_test_90_01'
+    save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
                 test_x=price_test_x, test_y=price_test_y)
-    save_arrays(path=path, feature='maximum', train_x=volume_train_x, train_y=volume_train_y,
+    save_arrays(path=path, feature='volume', train_x=volume_train_x, train_y=volume_train_y,
                 test_x=volume_test_x, test_y=volume_test_y)
+    save_arrays(path=path, feature='max_price', train_x=max_train_x, train_y=max_train_y,
+                test_x=max_test_x, test_y=max_test_y)
+    save_arrays(path=path, feature='min_price', train_x=min_train_x, train_y=min_train_y,
+                test_x=min_test_x, test_y=min_test_y)
 
 
