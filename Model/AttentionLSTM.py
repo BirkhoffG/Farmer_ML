@@ -5,98 +5,123 @@ import torch.nn.functional as F
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-class Encoder(nn.Module):
-    def __init__(self, input_size, hidden_size, bidirectional=True, layer_num=1):
-        super(Encoder, self).__init__()
-        self.hidden_size = hidden_size
-        self.input_size = input_size
-        self.bidirectional = bidirectional
-        self.layerNum = layer_num
+class AttentionLSTM(nn.Module):
+    def __init__(self, inputDim, hiddenNum, outputDim, seq_len=90, output_len=30, layerNum=3, drop_out=0.):
 
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                            bidirectional=bidirectional, batch_first=True)
+        super(AttentionLSTM, self).__init__()
+        # hidden cell numbers
+        self.hiddenNum = hiddenNum
+        # input dimension
+        self.inputDim = inputDim
+        # output dimension
+        self.outputDim = outputDim
+        # layer number
+        self.layerNum = layerNum
+        # sequence length
+        self.seq_len = seq_len
+        # output length
+        self.output_len = output_len
 
-    def forward(self, inputs):
-        batch_size = inputs.size(0)
-        h0 = torch.zeros(self.layerNum * 1, batch_size, self.hidden_size)
-        c0 = torch.zeros(self.layerNum * 1, batch_size, self.hidden_size)
+        # LSTM cell
+        self.lstm = nn.LSTM(input_size=self.inputDim, hidden_size=self.hiddenNum,
+                            num_layers=self.layerNum, batch_first=True)
+        self.layer_norm = nn.LayerNorm(self.hiddenNum)
+        self.atten = ScaledDotProductAttention(dropout=drop_out)
+        # self.dropout = nn.Dropout(drop_out)
+        # self.fc = nn.Linear(self.hiddenNum, self.outputDim)
+        self.lstm_decoder = nn.LSTM(input_size=self.hiddenNum, hidden_size=self.hiddenNum,
+                                    num_layers=self.layerNum, batch_first=True)
+        self.dense = nn.Sequential(
+            nn.Linear(self.hiddenNum, self.hiddenNum),
+            nn.Tanh(),
+            nn.Linear(self.hiddenNum, self.outputDim),
+            nn.Dropout(drop_out),
+            nn.LayerNorm(self.outputDim),
+        )
+        self.final_fc = nn.Linear(self.seq_len, self.output_len)
+
+    def forward(self, x):
+        # x = [batch, input_len, output_len]
+        batch_size = x.size(0)
+        h0 = torch.zeros(self.layerNum * 1, batch_size, self.hiddenNum)
+        c0 = torch.zeros(self.layerNum * 1, batch_size, self.hiddenNum)
         h0, c0 = h0.to(device), c0.to(device)
 
-        output, hidden = self.lstm(inputs, (h0, c0))
-        return output, hidden
+        # output = [batch_size, seq_len, hidden_num]
+        # hn = ([num_layer, batch_len, hidden_num],
+        #       [num_layer, batch_len, hidden_num])
+        output, hn = self.lstm(x, (h0, c0))
+        output = self.layer_norm(output)
 
-    def init_hidden(self):
-        return (torch.zeros(1 + int(self.bidirectional), 1, self.hidden_size),
-                torch.zeros(1 + int(self.bidirectional), 1, self.hidden_size))
+        atten_output, _ = self.atten(output, output, output)
+        # print(f"atten_output size: {atten_output.size()}")
 
+        decoder_output, hn_d = self.lstm_decoder(atten_output, hn)
+        decoder_output = self.layer_norm(decoder_output)
+        fc_output = self.dense(decoder_output)
 
-class AttentionDecoder(nn.Module):
+        # fc_output = self.fc(decoder_output)
+        # fc_output = self.dropout(fc_output)
+        fc_output = fc_output.squeeze()
+        fc_output = self.final_fc(fc_output)
 
-    def __init__(self, hidden_size, output_size, vocab_size):
-        super(AttentionDecoder, self).__init__()
-        self.hidden_size = hidden_size
-        self.output_size = output_size
+        # fc_output = self.fc(output[:, -1, :])
 
-        self.attn = nn.Linear(hidden_size + output_size, 1)
-        self.lstm = nn.LSTM(hidden_size + vocab_size, output_size)
-        self.final = nn.Linear(output_size, vocab_size)
+        return fc_output
 
-    def init_hidden(self):
-        return (torch.zeros(1, 1, self.output_size),
-                torch.zeros(1, 1, self.output_size))
-
-    def forward(self, encoder_outputs, input):
-        # encode_output = [batch_size * 2, input_len, hidden_size]
-
-        weights = []
-        batch_size = input.size(0)
-        decoder_hidden = (torch.zeros(1, batch_size, self.hidden_size).to(device),
-                          torch.zeros(1, batch_size, self.hidden_size).to(device))
-
-        for i in range(len(encoder_outputs)):
-            print(f"decoder_hidden[0][0].shape: {decoder_hidden[0][0].shape}")
-            print(f"encoder_outputs[0].shape: {encoder_outputs[0].shape}")
-            weights.append(self.attn(torch.cat((decoder_hidden[0][0],
-                                                encoder_outputs[i]), dim=1)))
-        normalized_weights = F.softmax(torch.cat(weights, 1), 1)
-
-        attn_applied = torch.bmm(normalized_weights.unsqueeze(1),
-                                 encoder_outputs.view(1, -1, self.hidden_size))
-
-        input_lstm = torch.cat((attn_applied[0], input[0]), dim=1) #if we are using embedding, use embedding of input here instead
-
-        output, hidden = self.lstm(input_lstm.unsqueeze(0), decoder_hidden)
-
-        output = self.final(output[0])
-
-        return output, hidden, normalized_weights
+    def weight_init(self):
+        for param in self.lstm.parameters():
+            if len(param.shape) >= 2:
+                nn.init.orthogonal_(param.data)
+            else:
+                nn.init.normal_(param.data)
 
 
-class AttentionLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, bidirectional, output_size, output_dim):
-        super(AttentionLSTM, self).__init__()
-        self.encoder = Encoder(input_size=input_size, hidden_size=hidden_size, bidirectional=bidirectional)
-        self.decoder = AttentionDecoder(hidden_size=hidden_size*(1+int(bidirectional)),
-                                        output_size=output_size, vocab_size=output_dim)
+class ScaledDotProductAttention(nn.Module):
+    def __init__(self, dropout):
+        super(ScaledDotProductAttention, self).__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.softmax = nn.Softmax(dim=2)
 
-    def forward(self, inputs):
-        # encode_output = [batch_size, input_len, hidden_size]
-        # encode_hidden = [input_size, batch_size, hidden_size]
-        encoder_output, encoded_hidden = self.encoder(inputs)
-        print(f"encode_output shape: {encoder_output.size()}")
-        print(f"encode_hidden shape: {encoded_hidden[0].size()}")
-        print(f"decoder encoder_outputs shape: {torch.cat((encoder_output, encoder_output)).size()}")
+    def forward(self, q, k, v, scale=None):
+        attention = torch.bmm(q, k.transpose(1, 2))
+        if scale:
+            attention = attention * scale
+        # calculate softmax
+        attention = self.softmax(attention)
+        # add dropout
+        attention = self.dropout(attention)
+        # context
+        context = torch.bmm(attention, v)
+        return context, attention
 
-        # encode_output = [batch_size * 2, input_len, hidden_size]
-        output, decoder_hidden, normalized_weights = \
-            self.decoder(torch.cat((encoder_output, encoder_output)), inputs)
+class PositionalWiseFeedForward(nn.Module):
+
+    def __init__(self, model_dim=512, ffn_dim=2048, dropout=0.0):
+        super(PositionalWiseFeedForward, self).__init__()
+        self.w1 = nn.Conv1d(model_dim, ffn_dim, 1)
+        self.w2 = nn.Conv1d(ffn_dim, model_dim, 1)
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(model_dim)
+
+    def forward(self, x):
+        output = x.transpose(1, 2)
+        output = self.w2(F.tanh(self.w1(output)))
+        output = self.dropout(output.transpose(1, 2))
+
+        # add residual and norm layer
+        output = self.layer_norm(x + output)
         return output
 
 
-model = AttentionLSTM(input_size=1, hidden_size=8,
-                      bidirectional=False, output_size=1, output_dim=1)
 
 #%%
-x = torch.rand(size=(64, 90, 1))
+hidden_num = 8
 
-y = model(x)
+model = AttentionLSTM(inputDim=1, hiddenNum=hidden_num, outputDim=1, layerNum=3)
+model.weight_init()
+model.to(device)
+
+x = torch.rand(size=(64, 90, 1))
+output = model(x)
+print(output.size())
