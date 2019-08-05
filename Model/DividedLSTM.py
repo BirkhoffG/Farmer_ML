@@ -20,7 +20,7 @@ class DividedLSTM(nn.Module):
                                    num_layers=layer_num, dropout=drop_out,
                                    batch_first=True)
         self.tcn = TCN(input_size=hidden_num, output_size=1,
-                       num_channels=[hidden_num, hidden_num // 2, hidden_num // 4],
+                       num_channels=[hidden_num, hidden_num // 4, output_dim],
                        input_len=90, output_len=1)
 
         self.dropout = nn.Dropout(drop_out)
