@@ -7,6 +7,7 @@ from src import eval
 import pandas as pd
 import numpy as np
 import os
+from DataPreprocessing import CROPS
 from pathlib import Path
 
 
@@ -21,6 +22,8 @@ def resample(data: pd.DataFrame, scale):
 
 def divide_train_test(data, lag, h_train, h_test):
     train_data, test_data = divideTrainTest(data)
+    # print(f"divide_train_test: train_data len: {len(train_data)}")
+    # print(f"divide_train_test: test_data len: {len(test_data)}")
 
     train_x, train_y = create_multi_ahead_samples(train_data, lag, h_train, RNN=True)
     test_x, test_y = create_multi_ahead_samples(test_data, lag, h_test, RNN=True)
@@ -72,20 +75,20 @@ def correct_max_min(arr: np.array, max_arr: np.array, min_arr: np.array):
 
 #%%
 if __name__ == '__main__':
-    price_df, volume_df = load_df(path="../dataset", crop="Brinjal", features=('price', 'volume'))
-    min_price_df, max_price_df = load_df(path="../dataset", crop='Brinjal', features=('min', 'max'))
+    price_df, volume_df = load_df(path="../dataset/imputed", crop=CROPS[0], features=('price', 'volume'))
+    # min_price_df, max_price_df = load_df(path="../dataset", crop=CROPS[-1], features=('min', 'max'))
 
-    print("Resample price_df...")
-    price_df = resample(data=price_df, scale='4d')
-    print("Resample volume_df...")
-    volume_df = resample(data=volume_df, scale='4d')
-    print("Resample max_df...")
-    max_price_df = resample(data=max_price_df, scale='4d')
-    print("Resample min_df...")
-    min_price_df = resample(data=min_price_df, scale='4d')
+    # print("Resample price_df...")
+    # price_df = resample(data=price_df, scale='4d')
+    # print("Resample volume_df...")
+    # volume_df = resample(data=volume_df, scale='4d')
+    # print("Resample max_df...")
+    # max_price_df = resample(data=max_price_df, scale='4d')
+    # print("Resample min_df...")
+    # min_price_df = resample(data=min_price_df, scale='4d')
 
     h_train, h_test = 1, 1
-    lag = 90
+    lag = 365
 
     print("Generating price train/test arr...")
     price_train_x, price_train_y, price_test_x, price_test_y = \
@@ -95,42 +98,42 @@ if __name__ == '__main__':
     volume_train_x, volume_train_y, volume_test_x, volume_test_y = \
         concatenate_array(volume_df, lag, h_train, h_test)
 
-    print("Generating max price train/test arr... ")
-    max_train_x, max_train_y, max_test_x, max_test_y = \
-        concatenate_array(max_price_df, lag, h_train, h_test)
+    # print("Generating max price train/test arr... ")
+    # max_train_x, max_train_y, max_test_x, max_test_y = \
+    #     concatenate_array(max_price_df, lag, h_train, h_test)
+    #
+    # print("Generating min price train/test arr... ")
+    # min_train_x, min_train_y, min_test_x, min_test_y = \
+    #     concatenate_array(min_price_df, lag, h_train, h_test)
 
-    print("Generating min price train/test arr... ")
-    min_train_x, min_train_y, min_test_x, min_test_y = \
-        concatenate_array(min_price_df, lag, h_train, h_test)
+    # print("Correcting train_x arr...")
+    # max_train_x, min_train_x = correct_max_min(price_train_x, max_train_x, min_train_x)
+    # assert (max_train_x >= price_train_x).all()
+    # assert (min_train_x <= price_train_x).all()
+    #
+    # print("Correcting train_y arr...")
+    # max_train_y, min_train_y = correct_max_min(price_train_y, max_train_y, min_train_y)
+    # assert (max_train_y >= price_train_y).all()
+    # assert (min_train_y <= price_train_y).all()
+    #
+    # print("Correcting test_x arr...")
+    # max_test_x, min_test_x = correct_max_min(price_test_x, max_test_x, min_test_x)
+    # assert (max_test_x >= price_test_x).all()
+    # assert (min_test_x <= price_test_x).all()
+    #
+    # print("Correcting test_y arr...")
+    # max_test_y, min_test_y = correct_max_min(price_test_y, max_test_y, min_test_y)
+    # assert (max_test_y >= price_test_y).all()
+    # assert (min_test_y <= price_test_y).all()
 
-    print("Correcting train_x arr...")
-    max_train_x, min_train_x = correct_max_min(price_train_x, max_train_x, min_train_x)
-    assert (max_train_x >= price_train_x).all()
-    assert (min_train_x <= price_train_x).all()
-
-    print("Correcting train_y arr...")
-    max_train_y, min_train_y = correct_max_min(price_train_y, max_train_y, min_train_y)
-    assert (max_train_y >= price_train_y).all()
-    assert (min_train_y <= price_train_y).all()
-
-    print("Correcting test_x arr...")
-    max_test_x, min_test_x = correct_max_min(price_test_x, max_test_x, min_test_x)
-    assert (max_test_x >= price_test_x).all()
-    assert (min_test_x <= price_test_x).all()
-
-    print("Correcting test_y arr...")
-    max_test_y, min_test_y = correct_max_min(price_test_y, max_test_y, min_test_y)
-    assert (max_test_y >= price_test_y).all()
-    assert (min_test_y <= price_test_y).all()
-
-    path = '../np_array/train_90_01_test_90_01'
+    path = f'../np_array/standard/train_365_01_test_365_01'
     save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
                 test_x=price_test_x, test_y=price_test_y)
     save_arrays(path=path, feature='volume', train_x=volume_train_x, train_y=volume_train_y,
                 test_x=volume_test_x, test_y=volume_test_y)
-    save_arrays(path=path, feature='max_price', train_x=max_train_x, train_y=max_train_y,
-                test_x=max_test_x, test_y=max_test_y)
-    save_arrays(path=path, feature='min_price', train_x=min_train_x, train_y=min_train_y,
-                test_x=min_test_x, test_y=min_test_y)
+    # save_arrays(path=path, feature='max_price', train_x=max_train_x, train_y=max_train_y,
+    #             test_x=max_test_x, test_y=max_test_y)
+    # save_arrays(path=path, feature='min_price', train_x=min_train_x, train_y=min_train_y,
+    #             test_x=min_test_x, test_y=min_test_y)
 
 

@@ -1,8 +1,10 @@
 import torch.nn as nn
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 from torch.nn.utils import weight_norm
+from Model.AttenModel import ScaledDotProductAttention as Attention
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -12,12 +14,19 @@ class TCN(nn.Module):
                  kernel_size=2, dropout=0.3, emb_dropout=0.1, tied_weights=False):
         super(TCN, self).__init__()
 
-        # 构建网络
-        self.tcn = TemporalConvNet(input_size, num_channels, kernel_size, dropout=dropout)
+        # TCN nets
+        self.p_tcn = TemporalConvNet(1, num_channels, kernel_size, dropout=dropout)
+        self.p_attention = Attention(dropout)
+        self.v_tcn = TemporalConvNet(1, num_channels, kernel_size, dropout=dropout)
+        self.v_attention = Attention(dropout)
 
         # 定义最后线性变换的纬度，即最后一个卷积层的通道数（类似2D卷积中的特征图数）到所有词汇的映射
         self.decoder = nn.Linear(num_channels[-1], output_size)
-        self.final_fc = nn.Linear(input_len, output_len)
+        self.final_fc = nn.Sequential(
+            nn.Linear(input_len * 2, input_len * 2),
+            nn.Dropout(dropout),
+            nn.Linear(input_len * 2, output_len),
+        )
 
         # 对输入词嵌入执行Dropout 表示随机从句子中舍弃词，迫使模型不依赖于单个词完成任务
         self.drop = nn.Dropout(emb_dropout)
@@ -31,14 +40,21 @@ class TCN(nn.Module):
         # self.decoder.bias.data.fill_(0)
         # self.decoder.weight.data.normal_(0, 0.01)
 
-    # 先编码，训练中再随机丢弃词，输入到网络实现推断，最后将推断结果解码为词
     def forward(self, x):
         """Input ought to have dimension (N, C_in, L_in), where L_in is the seq_len; here the input is (N, L, C)"""
         # emb = self.drop(input)
-        y = self.tcn(x.transpose(1, 2)).transpose(1, 2)
+        price_x, volume_x = x[:, :, :1], x[:, :, 1:]
+        price_y = self.p_tcn(price_x.transpose(1, 2)).transpose(1, 2)
+        price_y, _ = self.p_attention(price_y, price_y, price_y)
+        volume_y = self.v_tcn(volume_x.transpose(1, 2)).transpose(1, 2)
+        volume_y, _ = self.v_attention(volume_y, volume_y, volume_y)
+        # print(f"price_y shape: {price_y.size()}; volume_y shape: {volume_y.size()}")
+        y = torch.cat((price_y, volume_y), dim=1)
+        # print(f"y shape: {y.size()}")
+        # y = self.tcn(x.transpose(1, 2)).transpose(1, 2)
         y = self.decoder(y)
         y = self.final_fc(y[:, :, -1])
-        print("y.size: ", y.size())
+        # print("y.size: ", y.size())
         return y
 
 
@@ -74,15 +90,18 @@ class TemporalBlock(nn.Module):
 
     def init_weights(self):
         # init conv1
-        nn.init.normal_(self.conv1.weight.data)
+        nn.init.xavier_uniform_(self.conv1.weight, gain=np.sqrt(2))
+        # nn.init.normal_(self.conv1.weight.data)
         if self.conv1.bias is not None:
             nn.init.normal_(self.conv1.bias.data)
         # init conv2
-        nn.init.normal_(self.conv2.weight.data)
+        nn.init.xavier_uniform_(self.conv2.weight, gain=np.sqrt(2))
+        # nn.init.normal_(self.conv2.weight.data)
         if self.conv2.bias is not None:
             nn.init.normal_(self.conv2.bias.data)
         if self.downsample is not None:
-            nn.init.normal_(self.downsample.weight.data)
+            nn.init.xavier_uniform_(self.downsample.weight, gain=np.sqrt(2))
+            # nn.init.normal_(self.downsample.weight.data)
 
     def forward(self, x):
         out = self.net(x)
@@ -110,10 +129,10 @@ class TemporalConvNet(nn.Module):
 
 #%%
 
-model = TCN(input_size=4, output_size=1, num_channels=[16, 8, 4], input_len=90, output_len=1)
+model = TCN(input_size=2, output_size=1, num_channels=[16, 8, 4], input_len=90, output_len=1)
 # model.weight_init()
 model.to(device)
 
-x = torch.rand(size=(128, 90, 4))
+x = torch.rand(size=(128, 90, 2))
 output = model(x)
 print(output.size())

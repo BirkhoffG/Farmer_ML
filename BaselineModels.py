@@ -8,7 +8,7 @@ from prettytable import PrettyTable
 
 
 def load_array(path, type):
-    return np.load(f'{path}/pric_{type}.npy'), np.load(f'{path}/volu_{type}.npy')
+    return np.load(f'{path}/pri_{type}.npy'), np.load(f'{path}/vol_{type}.npy')
 
 
 def RMSE(pred, target):
@@ -20,7 +20,7 @@ table = PrettyTable()
 table.field_names = ['Model', 'Result']
 
 # load array
-path = './np_array/train_10_01_test_10_01'
+path = './np_array/train_10_01_test_10_01/Green Chilli'
 
 train_x = np.concatenate((load_array(path, 'train_x')), axis=-1)
 print(f"train_x.shape: {train_x.shape}")

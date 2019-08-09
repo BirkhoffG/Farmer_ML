@@ -118,7 +118,7 @@ class ConCatenateDataFrame(object):
 if __name__ == '__main__':
     crop = 'Brinjal'
 
-    for crop in CROPS:
+    for crop in ['Green Chilli']:
         if crop in ['Brinjal', 'Tomato']:
             continue
 

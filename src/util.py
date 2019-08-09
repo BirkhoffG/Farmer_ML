@@ -52,12 +52,12 @@ def create_multi_ahead_samples(ts, lookBack, lookAhead=1, RNN=True):
         future_seq = ts[i + lookBack: i + lookBack + lookAhead]
         dataX.append(history_seq)
         dataY.append(future_seq)
-    dataX = np.array(dataX)
-    dataY = np.array(dataY)
+    data_X = np.array(dataX)
+    data_Y = np.array(dataY)
     if not RNN:
-        dataX = np.reshape(dataX, (dataX.shape[0], dataX.shape[1]))
-        dataY = np.reshape(dataY, (dataY.shape[0], dataY.shape[1]))
-    return dataX, dataY
+        data_X = np.reshape(data_X, (data_X.shape[0], data_X.shape[1]))
+        data_Y = np.reshape(data_Y, (data_Y.shape[0], data_Y.shape[1]))
+    return data_X, data_Y
 
 
 # divide training and testing, default as 3:1
