@@ -8,5 +8,6 @@ setup(
     license='',
     author='Hangzhi Guo',
     author_email='',
-    description='', install_requires=['torch', 'numpy', 'pandas', 'netCDF4']
+    description='', install_requires=['torch', 'numpy', 'pandas', 'netCDF4', 'scikit-learn', 'prettytable',
+                                      'matplotlib', 'googlemaps']
 )

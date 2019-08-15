@@ -87,7 +87,7 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
     # optimizer
     optimizer = optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9)
     # track loss list
-    loss_list, rmse_list, val_loss_list, val_rmse_list = [] * 4
+    loss_list, rmse_list, val_loss_list, val_rmse_list = tuple([] for _ in range(4))
     total_steps = len(train_loader)
 
     for epoch in range(epochs):

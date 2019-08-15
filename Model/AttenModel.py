@@ -112,15 +112,15 @@ class PositionalWiseFeedForward(nn.Module):
 #%%
 
 # x = (seq_len, batch, input_dim)
-x = torch.rand(size=(64, 90, 2)).to(device)
-
-atten = Attention(input_dim=2, input_len=90, hidden_dim=2)
-# output = (seq_len, batch, input_dim)
-# hidden = (layer_n, batch, input_dim)
-output, hidden = atten(x)
-
-print(f"output size: {output.size()}")
-print(f"hidden size: {hidden.size()}")
+# x = torch.rand(size=(64, 90, 2)).to(device)
+#
+# atten = Attention(input_dim=2, input_len=90, hidden_dim=2)
+# # output = (seq_len, batch, input_dim)
+# # hidden = (layer_n, batch, input_dim)
+# output, hidden = atten(x)
+#
+# print(f"output size: {output.size()}")
+# print(f"hidden size: {hidden.size()}")
 
 # decoder = Decoder(hidden_size=8, output_size=1, n_layers=3)
 # decoder_output, _ = decoder(output, last_hidden=hidden, encoder_outputs=output)
