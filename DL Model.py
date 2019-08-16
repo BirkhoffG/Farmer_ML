@@ -32,6 +32,7 @@ def stat(arr):
 
 def save_arrays(**arrs):
     for name, li in arrs.items():
+        log.info(f"Saving {data_folder}/{name}.npy")
         np.save(f'{data_folder}/{name}.npy', np.array(li))
 
     # %%
@@ -232,3 +233,5 @@ nap_loss_li, nap_rmse_li, nap_val_loss_li, nap_val_rmse_li = \
 torch.save(nap_model, f'{data_folder}/nap_model.pt')
 save_arrays(nap_loss_li=nap_loss_li, nap_rmse_li=nap_rmse_li,
             nap_val_loss_li=nap_val_loss_li, nap_val_rmse_li=nap_val_rmse_li)
+
+log.info("Done.")
