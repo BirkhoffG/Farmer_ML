@@ -2,6 +2,12 @@ import torch
 import numpy as np
 from sklearn.metrics import mean_squared_error as mse
 import matplotlib.pyplot as plt
+import logging
+
+
+torch.manual_seed(1)
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 
 def RMSE(output: torch.tensor, target: torch.tensor, std: float, mean: float):
@@ -51,6 +57,3 @@ def plot(li, metric: str):
     plt.ylabel(metric)
     plt.title(f'Validation {metric} plot')
 
-
-torch.manual_seed(1)
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

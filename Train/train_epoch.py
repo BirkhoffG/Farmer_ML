@@ -4,8 +4,9 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 
 import time
-
-from Train.utils import *
+import numpy as np
+import logging
+from Train.utils import device, list2arr, val_RMSE, RMSE
 
 
 def validate(model: nn.Module, test_loader: DataLoader, std, mean):
@@ -18,7 +19,7 @@ def validate(model: nn.Module, test_loader: DataLoader, std, mean):
     :return: RMSE on validation set; loss list on validation set
     """
     # track values
-    pred_list, tar_list, loss_list = [] * 3
+    pred_list, tar_list, loss_list = [], [], []
     # L2 loss
     criterion = nn.MSELoss()
     # model evaluation
@@ -66,7 +67,7 @@ def poly_lr_scheduler(optimizer, init_lr, iter, lr_decay_iter=1,
 
 def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
           epochs: int, lr: float, train_std: float, train_mean: float, val_std: float, val_mean: float,
-          criterion=None):
+          log: logging, criterion=None):
     """
     Train model on train_loader and track the validation value on val_loader.
 
@@ -79,6 +80,7 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
     :param train_mean: training set's average value
     :param val_std: validation set's standard deviation
     :param val_mean: validation set's average value
+    :param log: logger object
     :param criterion: loss function (default: L1 loss)
     :return: loss_list, rmse_list, val_loss_list, val_rmse_list
     """
@@ -125,17 +127,17 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
 
             # print in every 50 episodes
             if (ix+1) % 50 == 0:
-                print(f'Epoch [{epoch + 1}/{epochs}], Step [{ix + 1}/{total_steps}], '
+                log.info(f'Epoch [{epoch + 1}/{epochs}], Step [{ix + 1}/{total_steps}], '
                       f'Time [{time.time() - start_time} sec], Avg loss: {sum(loss_list[-50:])/50}, '
                       f'Avg RMSE: {sum(rmse_list[-50:])/50}')
 
         # validation
         model.eval()
-        print("Validating on the testing set...")
+        log.info("Validating on the testing set...")
         val_rmse, val_loss_list = validate(model, val_loader, val_std, val_mean)
         val_avg_loss = np.mean(val_loss_list)
         val_rmse_list.append(val_rmse)
         val_loss_list.append(val_avg_loss)
-        print(f"RMSE: {val_rmse}; avg loss: {val_avg_loss}")
+        log.info(f"RMSE: {val_rmse}; avg loss: {val_avg_loss}")
 
     return loss_list, rmse_list, val_loss_list, val_rmse_list
