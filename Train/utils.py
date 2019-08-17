@@ -4,10 +4,8 @@ from sklearn.metrics import mean_squared_error as mse
 import matplotlib.pyplot as plt
 import logging
 
-
 torch.manual_seed(1)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 
 
 def RMSE(output: torch.tensor, target: torch.tensor, std: float, mean: float):
@@ -43,8 +41,16 @@ def list2arr(li: list):
     return arr.reshape(arr.shape[0], arr.shape[1])
 
 
-def norm(arr, std, mean):
-    return (arr-mean)/std
+def norm(arr, log: logging, std=None, mean=None):
+    std = np.std(arr) if std is None else std
+    mean = np.mean(arr) if mean is None else mean
+    log.info(f"std = {std}, mean = {mean}")
+    return (arr - mean) / std, std, mean
+
+
+def norm_arrays(*arrays, log: logging, std, mean):
+    log.info(f"std = {std}, mean = {mean}")
+    return tuple((arr - mean) / std for arr in arrays)
 
 
 def stat(arr):
@@ -53,7 +59,6 @@ def stat(arr):
 
 def plot(li, metric: str):
     print("Val value: ", min(li))
-    plt.plot(range(1, len(li)+1), li)
+    plt.plot(range(1, len(li) + 1), li)
     plt.ylabel(metric)
     plt.title(f'Validation {metric} plot')
-

@@ -1,5 +1,5 @@
 from Train.Dataset import ArrayDataset
-from Train.train_epoch import device, train
+from Train.train_epoch import device, train, validate
 from Train.utils import norm
 from Model.TCN import TCN, WideTCN
 
@@ -16,7 +16,7 @@ os.mkdir(data_folder)
 
 # set logging configuration
 logging.basicConfig(format='[%(asctime)s] - [%(levelname)s] - %(message)s',
-                    level=logging.WARN,
+                    level=logging.INFO,
                     handlers=[
                         logging.FileHandler(f'{data_folder}/logs.log'),
                         logging.StreamHandler(sys.stdout)
@@ -166,9 +166,9 @@ log.warning("Prepare to load training arrays.")
 t_batch_size = 256
 log.info(f"batch size = {t_batch_size}; shuffle = True (Default); num of workers = 4 (Default)")
 
-log.info(f"loading pretrain price arrays...")
+log.info(f"loading train arrays...")
 train_loader = ArrayDataset(train_x, train_y).data_loader(batch_size=t_batch_size)
-log.info(f"loading pretrain volume arrays...")
+log.info(f"loading validate arrays...")
 test_loader = ArrayDataset(test_x, test_y).data_loader(batch_size=t_batch_size)
 
 # %%
@@ -193,6 +193,7 @@ log.warning("Loading volume pretraining model...")
 v_model = TCN(input_size=1, output_size=1, num_channels=[16, 8, 4, 2, 1], input_len=90, output_len=1,
               kernel_size=3, dropout=0.3, feature='vol')
 v_model.to(device)
+print(device)
 
 log.info("Start volume pretraining...")
 v_loss_list, v_rmse_list, v_val_loss_list, v_val_rmse_list = \

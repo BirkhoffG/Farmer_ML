@@ -9,11 +9,11 @@ import logging
 from Train.utils import device, list2arr, val_RMSE, RMSE
 
 
-def validate(model: nn.Module, test_loader: DataLoader, std, mean):
+def validate(model: nn.Module, val_loader: DataLoader, std, mean):
     """
     validate the test set in the model
     :param model: neural network modal
-    :param test_loader: test loader
+    :param val_loader: test loader
     :param std: standard deviation
     :param mean: mean value
     :return: RMSE on validation set; loss list on validation set
@@ -25,7 +25,7 @@ def validate(model: nn.Module, test_loader: DataLoader, std, mean):
     # model evaluation
     model.eval()
     with torch.no_grad():
-        for i, (x, y) in enumerate(test_loader):
+        for i, (x, y) in enumerate(val_loader):
             x, y = x.to(device), y.to(device)
             result = model(x.float())
 
