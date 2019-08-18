@@ -224,6 +224,7 @@ if __name__ == '__main__':
                 'epochs': 50,
                 'lr': 0.01
             }
-        }
+        },
+
     }
     main(**param)

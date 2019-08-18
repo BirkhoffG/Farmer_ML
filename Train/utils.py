@@ -61,4 +61,4 @@ def plot(li, metric: str):
     print("Val value: ", min(li))
     plt.plot(range(1, len(li) + 1), li)
     plt.ylabel(metric)
-    plt.title(f'Validation {metric} plot')
+    plt.title(f'{metric} plot')
