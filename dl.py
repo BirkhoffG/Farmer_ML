@@ -9,6 +9,7 @@ import logging
 import os
 import time
 import sys
+import json
 
 # mk dir
 data_folder = f'./result/train [{time.strftime("%Y-%m-%d-%H-%M-%S")}]'
@@ -227,4 +228,6 @@ if __name__ == '__main__':
         },
 
     }
+    with open('./param.json', 'r') as f:
+        param = json.load(f)
     main(**param)
