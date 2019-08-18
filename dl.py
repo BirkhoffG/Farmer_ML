@@ -187,47 +187,6 @@ def main(**param):
 
 
 if __name__ == '__main__':
-    param = {
-        'p_path': './np_array/arrays/pretrain/Brinjal/train_90_01_test_90_01/pretrain',
-        't_path': './np_array/arrays/Brinjal/train_90_01_test_90_01/old',
-        'p_batch_size': 256,
-        't_batch_size': 256,
-        'price_pretrain': {
-            'do_pretrain': True,
-            'model': {
-                'input_size': 1,
-                'output_size': 1,
-                'num_channels': [16, 8, 4, 2, 1],
-                'input_len': 90,
-                'output_len': 1,
-                'kernel_size': 3,
-                'dropout': 0.3,
-                'feature': 'pri'
-            },
-            'train': {
-                'epochs': 50,
-                'lr': 0.01
-            }
-        },
-        'volume_pretrain': {
-            'do_pretrain': True,
-            'model': {
-                'input_size': 1,
-                'output_size': 1,
-                'num_channels': [16, 8, 4, 2, 1],
-                'input_len': 90,
-                'output_len': 1,
-                'kernel_size': 3,
-                'dropout': 0.3,
-                'feature': 'vol'
-            },
-            'train': {
-                'epochs': 50,
-                'lr': 0.01
-            }
-        },
-
-    }
     with open('./param.json', 'r') as f:
         param = json.load(f)
     main(**param)
