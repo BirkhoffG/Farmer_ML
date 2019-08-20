@@ -5,6 +5,7 @@ import os
 import pandas as pd
 
 import random
+# TODO generate market train/test array
 
 
 def load_df(path, crop, features=('price', 'volume')):
@@ -50,14 +51,12 @@ def one_hot_encoding(arr: np.array):
     return encoded_arr
 
 
-def prepare_array(df, lag, ahead, apply_one_hot_encoding=True):
+def prepare_array(df, lag, ahead):
     # date index
     time_seq = df.index.dayofyear - 1
     # convert to one-hot encoding matrix
     ts = df[df.columns[0]].to_numpy()
-    # TODO
-    if apply_one_hot_encoding:
-        time_seq = one_hot_encoding(time_seq)
+
     ts = np.expand_dims(ts, axis=1)
     print(f"ts shape: {ts.shape}; time_seq shape: {time_seq.shape}")
     ts_seq = np.concatenate((ts, time_seq), axis=-1)
@@ -68,8 +67,6 @@ def prepare_array(df, lag, ahead, apply_one_hot_encoding=True):
         if ix == 0: continue
 
         ts = df[df.columns[0]].to_numpy()
-        if apply_one_hot_encoding:
-            ts = np.expand_dims(ts, axis=1)
         ts_seq = np.concatenate((ts, time_seq), axis=-1).astype(int)
         temp_train_x, temp_train_y, temp_test_x, temp_test_y = \
             divide_train_test(ts_seq, lag=lag, h_train=ahead, h_test=ahead)
