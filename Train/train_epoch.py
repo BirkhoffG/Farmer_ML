@@ -33,7 +33,7 @@ def validate(model: nn.Module, val_loader: DataLoader, std, mean):
             pred_list.extend(result_list)
             tar_list.extend(y.cpu().data.numpy().tolist())
 
-            loss = criterion(result, y.float())
+            loss = criterion(result, y.float()).cpu().data.numpy()
             loss_list.append(loss)
 
     pred_arr = list2arr(pred_list)
