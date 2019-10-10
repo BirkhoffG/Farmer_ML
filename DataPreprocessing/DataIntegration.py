@@ -7,8 +7,8 @@ import numpy as np
 from DataPreprocessing import CROPS, STATES
 
 
-class ConCatenateDataFrame(object):
-    def __init__(self, data_path, crop, export_path="./concatenated_dataset",
+class IntegrateDataFrame(object):
+    def __init__(self, data_path, crop, export_path="./dataset",
                  date_start="2008-1-1", date_end="2018-12-31", reindex=False):
         self.data_path = data_path
         if crop in CROPS:
@@ -25,14 +25,8 @@ class ConCatenateDataFrame(object):
         if reindex:
             self.reindex()
         print("Done.")
-        # self.load_file("May_08_Goa_Mang.csv")
-        # price_df = self.price_df
-        # volume_df = self.volume_df
-        # print(self.price_df)
-        # print(self.volume_df.count())
 
     def load_file(self, file):
-        # state
         state = file.split('_')[2]
         df = pd.read_csv(f'./{self.data_path}/{file}')
         markets = df['Market'].unique()
@@ -43,9 +37,8 @@ class ConCatenateDataFrame(object):
             market_df = market_df.dropna(subset=['Arrival Date'])
             market_df.loc[:, 'Arrival Date'] = pd.to_datetime(market_df['Arrival Date'], format='%d/%m/%Y')
             market_df.set_index('Arrival Date', inplace=True)
-
+            # name column
             market = f'{market}_{state}'
-            # print(f'market: {market}')
 
             # append market column if not exits
             if market not in self.price_df.columns:
@@ -57,11 +50,9 @@ class ConCatenateDataFrame(object):
             if market not in self.min_df.columns:
                 self.min_df[market] = np.nan
 
-            # resample market df
+            # resample market df in daily bases
             market_df = market_df.resample('D').asfreq()
-            # print(market_df)
-            # print(f'{price_df[market].loc[market_df.index[0]: market_df.index[-1]]}')
-            # print(f"{market_df['Modal Price(Rs./Quintal)']}")
+
             try:
                 self.price_df[market].loc[market_df.index[0]: market_df.index[-1]] = \
                     market_df['Modal Price(Rs./Quintal)'].to_numpy()
@@ -84,11 +75,7 @@ class ConCatenateDataFrame(object):
             if file.split('_')[3] != f'{self.crop[:4]}.csv':
                 continue
             print(f"No.{ix}: {file}")
-            # if file == start_point:
-            #     start_concate = True
-            #     continue
-            # if not start_concate:
-            #     continue
+
             self.load_file(f"{file}")
 
     def reindex(self):
@@ -116,19 +103,15 @@ class ConCatenateDataFrame(object):
 
 
 if __name__ == '__main__':
-    crop = 'Brinjal'
 
-    for crop in ['Green Chilli']:
-        if crop in ['Brinjal', 'Tomato']:
-            continue
-
+    for crop in CROPS:
         path = f'../Raw Data/{crop}'
 
         print(f"Concatenating {crop}")
-        price_df, volume_df, min_df, max_df = ConCatenateDataFrame(data_path=path, crop=crop).export()
+        price_df, volume_df, min_df, max_df = IntegrateDataFrame(data_path=path, crop=crop).export()
 
         print(f"storing ../dataset/price_{crop}.csv...")
-        price_df.to_csv(f"../dataset/price_{crop}.csv")
+        price_df.Fto_csv(f"../dataset/price_{crop}.csv")
 
         print(f"storing ../dataset/volume_{crop}.csv...")
         volume_df.to_csv(f"../dataset/volume_{crop}.csv")

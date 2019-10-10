@@ -52,4 +52,3 @@ class MarketDataset(ArrayDataset):
             w = torch.cat((w, torch.eye(366)))
         return p, v, w, g, pp, y
 
-

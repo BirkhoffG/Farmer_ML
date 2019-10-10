@@ -14,8 +14,7 @@ class MarketEncoding:
 
     def get_id(self, market, return_list=True):
         return list(np.where(self.market_df['Market'] == market)[0]) \
-            if return_list \
-            else list(np.where(self.market_df['Market'] == market)[0])[0]
+            if return_list else list(np.where(self.market_df['Market'] == market)[0])[0]
 
     def get_market(self, id):
         return self.market_df.iloc[id]['Market']

@@ -128,7 +128,7 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
             # print in every 50 episodes
             if (ix+1) % 50 == 0:
                 log.info(f'Epoch [{epoch + 1}/{epochs}], Step [{ix + 1}/{total_steps}], '
-                      f'Time [{time.time() - start_time:.4f} sec], Avg loss: {sum(loss_list[-50:])/50: .4f}, '
+                      f'Time [{time.time() - start_time:.6f} sec], Avg loss: {sum(loss_list[-50:])/50: .4f}, '
                       f'Avg RMSE: {sum(rmse_list[-50:])/50: .4f}')
 
         # validation

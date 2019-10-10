@@ -8,7 +8,7 @@ from Model.AttenModel import ScaledDotProductAttention as Attention
 
 
 class WideTCN(nn.Module):
-    def __init__(self, input_size, output_size, num_channels, input_len, output_len,
+    def __init__(self, mkt_num, embedding_dim, num_channels, input_len, output_len,
                  kernel_size=3, dropout=0.3, p_tcn=None, v_tcn=None):
         super(WideTCN, self).__init__()
 
@@ -22,46 +22,39 @@ class WideTCN(nn.Module):
         else:
             self.v_tcn = v_tcn
 
-        self.final_fc = nn.Sequential(
-            nn.Linear(input_len * 2, input_len),
+        self.mkt_embedding = nn.Embedding(mkt_num, embedding_dim)
+        self.crop_embedding = nn.Embedding(6, 12)
+        self.relu_fc = nn.Sequential(
+            nn.Linear(embedding_dim + 12 + 2, embedding_dim // 2 + 6 + 1),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(input_len, input_len // 2),
+            nn.Linear(embedding_dim // 2 + 6 + 1, 30),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(input_len // 2, input_len // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(input_len // 2, input_len // 4),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(input_len // 4, output_len),
         )
+        self.final_fc = nn.Linear(input_len * 2 + 30, output_len)
 
-    #         self.final_fc = nn.Linear(input_len, output_len)
-    #         self.dropout = nn.Dropout(dropout)
+        #     def init_weights(self):
+        #         # self.encoder.weight.data.normal_(0, 0.01)
+        #         #         nn.init.xavier_normal_(self.tcn)
+        #         nn.init.xavier_normal_(self.final_fc.weight.data)
+        #         nn.init.normal_(self.final_fc.bias.data)
 
-    # 对输入词嵌入执行Dropout 表示随机从句子中舍弃词，迫使模型不依赖于单个词完成任务
-    #         self.init_weights()
-
-    def init_weights(self):
-        # self.encoder.weight.data.normal_(0, 0.01)
-        #         nn.init.xavier_normal_(self.tcn)
-        nn.init.xavier_normal_(self.final_fc.weight.data)
-        nn.init.normal_(self.final_fc.bias.data)
-
-    def forward(self, x):
+    def forward(self, price_x, volume_x, geo_x, mkt_x, crop_x):
         """Input ought to have dimension (N, C_in, L_in), where L_in is the seq_len; here the input is (N, L, C)"""
         # emb = self.drop(input)
-        price_x, volume_x = x[:, :, :1], x[:, :, 1:]
         price_y = self.p_tcn(price_x.transpose(1, 2)).transpose(1, 2)
         volume_y = self.v_tcn(volume_x.transpose(1, 2)).transpose(1, 2)
-        y = torch.cat((price_y, volume_y), dim=1)
+        wide_y = torch.cat((price_y, volume_y), dim=1)
         # print(f"price_y shape: {price_y.size()}; volume_y shape: {volume_y.size()}")
         # print(f"y shape: {y.size()}")
-        y = self.final_fc(y[:, :, 0])
+        mkt_x = self.mkt_embedding(mkt_x)
+        crop_x = self.crop_embedding(crop_x)
+        deep_x = torch.cat((mkt_x, crop_x, geo_x), dim=1)
+        print(f"deep_x shape: {deep_x.size()}")
+        #         y = self.final_fc(y[:, :, 0])
         # print("y.size: ", y.size())
-        return y
+        return wide_y
 
 
 class TCN(nn.Module):
