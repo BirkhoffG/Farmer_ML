@@ -76,7 +76,6 @@ if __name__ == '__main__':
     np2df(m=min_imputed, col=min_df.columns).to_csv(f'{path}/min_imputed_{crop}.csv')
 
     # print("loading price_df")
-    # # TODO
     # price_df = load_file(f'{path}/{features[0]}_{crop}.csv')
     # price_df = pd.read_csv(f'{path}price_{crop}.csv', index_col=0, parse_dates=True, low_memory=False)
     # print("loading volume_df")

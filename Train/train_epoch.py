@@ -134,6 +134,7 @@ def train(model: nn.Module, train_loader: DataLoader, val_loader: DataLoader,
         # validation
         model.eval()
         log.info("Validating on the testing set...")
+        # TODO: validate crops separately
         val_rmse, val_loss_list = validate(model, val_loader, val_std, val_mean)
         val_avg_loss = np.mean(val_loss_list)
         val_rmse_list.append(val_rmse)
