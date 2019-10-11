@@ -4,7 +4,7 @@ Crawler the crop price data from http://agmarknet.gov.in
 author: Alexander Woodruff, Hangzhi Guo
 """
 import selenium
-from DataPreprocessing import CROPS, STATES
+from DataPreprocessing import YEARS, MONTHS, CROPS, STATES
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -174,9 +174,4 @@ def process(years, months, states, crops):
 
 
 if __name__ == '__main__':
-    years = ['2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018']
-
-    months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
-              'August', 'September', 'October', 'November', 'December']
-
-    process(years, months, STATES, CROPS)
+    process(YEARS, MONTHS, STATES, CROPS)

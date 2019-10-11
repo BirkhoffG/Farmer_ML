@@ -1,6 +1,6 @@
 # from DataPreprocessing.PrepareTrainTestArray import divide_train_test
 from DataPreprocessing import CROPS
-from src.util import divideTrainTest
+# from src.util import divideTrainTest
 import numpy as np
 import json
 import os
@@ -49,42 +49,11 @@ def one_hot_encoding(arr: np.array):
     return encoded_arr
 
 
-# def prepare_array(df, lag, ahead):
-#     # date index
-#     time_seq = df.index.dayofyear - 1
-#     # convert to one-hot encoding matrix
-#     ts = df[df.columns[0]].to_numpy()
-#
-#     ts = np.expand_dims(ts, axis=1)
-#     print(f"ts shape: {ts.shape}; time_seq shape: {time_seq.shape}")
-#     ts_seq = np.concatenate((ts, time_seq), axis=-1)
-#     train_x, train_y, test_x, test_y = divide_train_test(ts_seq, lag, ahead, ahead)
-#
-#     for ix, col in enumerate(df.columns):
-#         print(f"[{ix+1}/{len(df.columns)}] col: {col}")
-#         if ix == 0: continue
-#
-#         ts = df[df.columns[0]].to_numpy()
-#         ts_seq = np.concatenate((ts, time_seq), axis=-1).astype(int)
-#         temp_train_x, temp_train_y, temp_test_x, temp_test_y = \
-#             divide_train_test(ts_seq, lag=lag, h_train=ahead, h_test=ahead)
-#
-#         train_x = np.concatenate((train_x, temp_train_x), axis=0)
-#         train_y = np.concatenate((train_y, temp_train_y), axis=0)
-#         test_x = np.concatenate((test_x, temp_test_x), axis=0)
-#         test_y = np.concatenate((test_y, temp_test_y), axis=0)
-#         # print("=" * 6)
-#         print(f"train_x size: {train_x.shape}")
-#         print(f"train_y size: {train_y.shape}")
-#         print(f"test_x size: {test_x.shape}")
-#         print(f"test_y size: {test_y.shape}")
-#         break
-#     return train_x, train_y, test_x, test_y
-# %%
 def divide_train_test(data, lag, h_train, h_test, mktid, lon, lat):
-    train_data, test_data = divideTrainTest(data)
-    # print(f"divide_train_test: train_data len: {len(train_data)}")
-    # print(f"divide_train_test: test_data len: {len(test_data)}")
+    # train size: 75% train set; 25% test set
+    train_size = int(len(data) * 0.75)
+
+    train_data, test_data = data[0:train_size], data[train_size:]
 
     train_x, train_y, train_mkt, train_geo = create_multi_ahead_samples(train_data, lag, h_train, mktid=mktid,
                                                                         lon=lon, lat=lat)
@@ -101,17 +70,11 @@ def prepare_array(df, lag, ahead, mkt2loc: dir()):
     ts = df[df.columns[0]].to_numpy()
 
     ts = np.expand_dims(ts, axis=1)
-    # print(f"ts shape: {ts.shape}; ")
-    # x, y = create_multi_ahead_samples(ts, lag, ahead)
     train_x, train_y, test_x, test_y, train_mkt, test_mkt, train_geo, test_geo = \
         divide_train_test(ts, lag, ahead, ahead,
                           mkt2loc[df.columns[0]]['id'],
                           lat=mkt2loc[df.columns[0]]['lat'],
                           lon=mkt2loc[df.columns[0]]['lng'])
-    # print(f"train_x size: {train_x.shape}")
-    # print(f"train_y size: {train_y.shape}")
-    # print(f"test_x size: {test_x.shape}")
-    # print(f"test_y size: {test_y.shape}")
 
     for ix, col in enumerate(df.columns):
         print(f"[{ix + 1}/{len(df.columns)}] col: {col}")
@@ -143,12 +106,8 @@ def prepare_array(df, lag, ahead, mkt2loc: dir()):
         # print(f"train_geo size: {train_geo.shape}")
         # print(f"test_geo size: {test_geo.shape}")
 
-        break
     return train_x, train_y, test_x, test_y, train_mkt, test_mkt, train_geo, test_geo
 
-
-# train_x, train_y, test_x, test_y, train_mkt, test_mkt, train_geo, test_geo = \
-#     prepare_array(price_df, 90, 1, mkt2loc=mkt2loc)
 
 def save_arrays(path, feature, **kwargs):
     try:
@@ -163,11 +122,6 @@ def save_arrays(path, feature, **kwargs):
 
 
 def process(crop, lag=90, ahead=1, rescale='4d'):
-    # parameters
-    # ahead = 1
-    # lag = 90
-    # crop = CROPS[-1]
-
     # load df
     price_df, volume_df = load_df(path="../dataset/data", crop=crop, features=('price', 'volume'))
 
@@ -186,22 +140,12 @@ def process(crop, lag=90, ahead=1, rescale='4d'):
     assert len(price_train_x) == len(price_train_y);
     assert len(price_test_x) == len(price_test_y)
 
-    # pretrain_len = len(price_train_x) // 4 * 3
-    # price_pretrain_x, price_pretrain_y = price_train_x[:pretrain_len], price_train_y[:pretrain_len]
-
     print("Generating volume arr... ")
     volume_train_x, volume_train_y, volume_test_x, volume_test_y, \
     volume_train_mkt, volume_test_mkt, volume_train_geo, volume_test_geo = \
         prepare_array(volume_df, lag, ahead, mkt2loc)
     assert len(volume_train_x) == len(volume_train_y);
     assert len(volume_test_x) == len(volume_test_y)
-
-    # pretrain_len = len(volume_train_x) // 4 * 3
-    # volume_pretrain_x, volume_pretrain_y = volume_train_x[:pretrain_len], volume_train_y[:pretrain_len]
-
-    # path = f'../np_array/pretrain/{crop}/train_90_01_test_90_01/pretrain'
-    # save_arrays(path=path, feature='price', train_x=price_pretrain_x, train_y=price_pretrain_y)
-    # save_arrays(path=path, feature='volume', train_x=volume_pretrain_x, train_y=volume_pretrain_y)
 
     path = f'../np_array/final/{crop}/train_90_01_test_90_01/'
     save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
@@ -215,3 +159,35 @@ def process(crop, lag=90, ahead=1, rescale='4d'):
 if __name__ == '__main__':
     for crop in [CROPS[0], CROPS[1], CROPS[-1]]:
         process(crop)
+
+# def prepare_array(df, lag, ahead):
+#     # date index
+#     time_seq = df.index.dayofyear - 1
+#     # convert to one-hot encoding matrix
+#     ts = df[df.columns[0]].to_numpy()
+#
+#     ts = np.expand_dims(ts, axis=1)
+#     print(f"ts shape: {ts.shape}; time_seq shape: {time_seq.shape}")
+#     ts_seq = np.concatenate((ts, time_seq), axis=-1)
+#     train_x, train_y, test_x, test_y = divide_train_test(ts_seq, lag, ahead, ahead)
+#
+#     for ix, col in enumerate(df.columns):
+#         print(f"[{ix+1}/{len(df.columns)}] col: {col}")
+#         if ix == 0: continue
+#
+#         ts = df[df.columns[0]].to_numpy()
+#         ts_seq = np.concatenate((ts, time_seq), axis=-1).astype(int)
+#         temp_train_x, temp_train_y, temp_test_x, temp_test_y = \
+#             divide_train_test(ts_seq, lag=lag, h_train=ahead, h_test=ahead)
+#
+#         train_x = np.concatenate((train_x, temp_train_x), axis=0)
+#         train_y = np.concatenate((train_y, temp_train_y), axis=0)
+#         test_x = np.concatenate((test_x, temp_test_x), axis=0)
+#         test_y = np.concatenate((test_y, temp_test_y), axis=0)
+#         # print("=" * 6)
+#         print(f"train_x size: {train_x.shape}")
+#         print(f"train_y size: {train_y.shape}")
+#         print(f"test_x size: {test_x.shape}")
+#         print(f"test_y size: {test_y.shape}")
+#         break
+#     return train_x, train_y, test_x, test_y
