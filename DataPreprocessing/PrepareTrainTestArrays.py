@@ -1,4 +1,5 @@
 # from DataPreprocessing.PrepareTrainTestArray import divide_train_test
+#from __init__ import CROPS
 from DataPreprocessing import CROPS
 # from src.util import divideTrainTest
 import numpy as np
@@ -43,6 +44,9 @@ def create_multi_ahead_samples(ts: np.array, look_back: int, look_ahead=1, mktid
 
 
 def one_hot_encoding(arr: np.array):
+    arr = np.array(arr, dtype = int)
+    print('arr.max()', arr.max())
+    print('len(arr)', len(arr))
     encoded_arr = np.zeros((len(arr), arr.max() + 1))
     print(f"encoded_arr size: {encoded_arr.shape}")
     encoded_arr[np.arange(len(arr)), arr] = 1
@@ -77,7 +81,7 @@ def prepare_array(df, lag, ahead, mkt2loc: dir()):
                           lon=mkt2loc[df.columns[0]]['lng'])
 
     for ix, col in enumerate(df.columns):
-        print(f"[{ix + 1}/{len(df.columns)}] col: {col}")
+        #print(f"[{ix + 1}/{len(df.columns)}] col: {col}")
         if ix == 0: continue
 
         ts = np.expand_dims(df[col].to_numpy(), axis=1)
@@ -113,7 +117,7 @@ def save_arrays(path, feature, **kwargs):
     try:
         for file_name, arr in kwargs.items():
             print(f"saving {path}/{feature[:3]}_{file_name}.npy")
-            np.save(f"{path}/{feature[:3]}_train_x.npy", arr)
+            np.save(f"{path}/{feature[:3]}_{file_name}.npy", arr)
 
     except FileNotFoundError:
         os.mkdir(path)
@@ -123,7 +127,7 @@ def save_arrays(path, feature, **kwargs):
 
 def process(crop, lag=90, ahead=1, rescale='4d'):
     # load df
-    price_df, volume_df = load_df(path="../dataset/data", crop=crop, features=('price', 'volume'))
+    price_df, volume_df = load_df(path="../dataset/imputed", crop=crop, features=('price', 'volume'))
 
     # mkt2loc
     with open('../mkt2loc.json', 'r') as f:
@@ -139,6 +143,8 @@ def process(crop, lag=90, ahead=1, rescale='4d'):
         prepare_array(price_df, lag, ahead, mkt2loc)
     assert len(price_train_x) == len(price_train_y);
     assert len(price_test_x) == len(price_test_y)
+    
+    print('price_train_mkt.shape',price_train_mkt.shape)
 
     print("Generating volume arr... ")
     volume_train_x, volume_train_y, volume_test_x, volume_test_y, \
@@ -147,7 +153,7 @@ def process(crop, lag=90, ahead=1, rescale='4d'):
     assert len(volume_train_x) == len(volume_train_y);
     assert len(volume_test_x) == len(volume_test_y)
 
-    path = f'../np_array/final/{crop}/train_90_01_test_90_01/'
+    path = f'../np_array/final/train_90_01_test_90_01/{crop}'
     save_arrays(path=path, feature='price', train_x=price_train_x, train_y=price_train_y,
                 test_x=price_test_x, test_y=price_test_y, train_mkt=price_train_mkt, test_mkt=price_test_mkt,
                 train_geo=price_train_geo, test_geo=price_test_geo)
@@ -157,37 +163,7 @@ def process(crop, lag=90, ahead=1, rescale='4d'):
 
 
 if __name__ == '__main__':
-    for crop in [CROPS[0], CROPS[1], CROPS[-1]]:
-        process(crop)
-
-# def prepare_array(df, lag, ahead):
-#     # date index
-#     time_seq = df.index.dayofyear - 1
-#     # convert to one-hot encoding matrix
-#     ts = df[df.columns[0]].to_numpy()
-#
-#     ts = np.expand_dims(ts, axis=1)
-#     print(f"ts shape: {ts.shape}; time_seq shape: {time_seq.shape}")
-#     ts_seq = np.concatenate((ts, time_seq), axis=-1)
-#     train_x, train_y, test_x, test_y = divide_train_test(ts_seq, lag, ahead, ahead)
-#
-#     for ix, col in enumerate(df.columns):
-#         print(f"[{ix+1}/{len(df.columns)}] col: {col}")
-#         if ix == 0: continue
-#
-#         ts = df[df.columns[0]].to_numpy()
-#         ts_seq = np.concatenate((ts, time_seq), axis=-1).astype(int)
-#         temp_train_x, temp_train_y, temp_test_x, temp_test_y = \
-#             divide_train_test(ts_seq, lag=lag, h_train=ahead, h_test=ahead)
-#
-#         train_x = np.concatenate((train_x, temp_train_x), axis=0)
-#         train_y = np.concatenate((train_y, temp_train_y), axis=0)
-#         test_x = np.concatenate((test_x, temp_test_x), axis=0)
-#         test_y = np.concatenate((test_y, temp_test_y), axis=0)
-#         # print("=" * 6)
-#         print(f"train_x size: {train_x.shape}")
-#         print(f"train_y size: {train_y.shape}")
-#         print(f"test_x size: {test_x.shape}")
-#         print(f"test_y size: {test_y.shape}")
-#         break
-#     return train_x, train_y, test_x, test_y
+    #for crop in [CROPS[0], CROPS[1], CROPS[-1]]:
+    process(CROPS[0])
+        
+        

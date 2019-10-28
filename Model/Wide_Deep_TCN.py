@@ -55,7 +55,7 @@ class WideDeepTCN(nn.Module):
         )
 
         self.final_fc = nn.Linear(input_len * 2 + input_len // 3 + mkt_emb // 3, output_len)
-
+        self.log_softmax = nn.LogSoftmax(dim=1)
         # TODO: adjust initialization method
         # self.init_weights()
 
@@ -65,21 +65,43 @@ class WideDeepTCN(nn.Module):
 
     def forward(self, price_x, volume_x, geo_x, mkt_x, crop_x):
         # TCN
+#         print('price_x.transpose(1, 2).shape',price_x.transpose(1, 2).shape)
         price_y = self.p_tcn(price_x.transpose(1, 2)).transpose(1, 2)
+#         print('price_y.shape',price_y.shape)
+#         print('volume_x.transpose(1, 2).shape',volume_x.transpose(1, 2).shape)
         volume_y = self.v_tcn(volume_x.transpose(1, 2)).transpose(1, 2)
+#         print('volume_y.shape',volume_y.shape)
         # Embedding
         mkt_x = self.mkt_embedding(mkt_x)
         crop_x = self.crop_embedding(crop_x)
         # wide component
         wide_x = torch.cat((price_y, volume_y), dim=1)
-        wide_y = self.wide_fc(wide_x)
+#         print('wide_x.transpose(1, 2)',wide_x.transpose(1, 2).shape)
+        wide_y = self.wide_fc(wide_x.transpose(1, 2)).transpose(1, 2)
+#         print('wide_y.shape',wide_y.shape)
+#         wide_y = wide_y.reshape(wide_y.shape[0],-1,1)
+#         print('wide_y.shape',wide_y.shape)
         # deep component
-        deep_x = torch.cat((price_y, volume_y, mkt_x, crop_x, geo_x), dim=1)
-        deep_y = self.deep_fc(deep_x)
-        # final fc
-        final_x = torch.cat((deep_x, deep_y), dim=1)
+#         print('deep')
 
-        # print(f"price_y shape: {price_y.size()}; volume_y shape: {volume_y.size()}")
-        # print(f"y shape: {y.size()}")
-        # print("y.size: ", y.size())
-        return self.final_fc(final_x)
+        mkt_x = mkt_x.view(mkt_x.shape[0],mkt_x.shape[1],1)
+        geo_x = geo_x.view(geo_x.shape[0],geo_x.shape[1],1)
+        crop_x = crop_x.view(crop_x.shape[0],crop_x.shape[1],1)
+#         price_y = price_y.reshape(price_y.shape[0],price_y.shape[1])
+#         volume_y = volume_y.reshape(volume_y.shape[0],volume_y.shape[1])
+#         print('price_y.shape',price_y.shape)
+#         print('volume_y.shape',volume_y.shape)
+#         print('mkt_x.shape',mkt_x.shape)
+#         print('crop_x.shape',crop_x.shape)
+#         print('geo_x.shape',geo_x.shape)
+        deep_x = torch.cat((price_y, volume_y, mkt_x, crop_x, geo_x), dim=1)
+#         deep_x = deep_x.reshape(deep_x.shape[0],1,deep_x.shape[1])
+#         print('deep_x.shape',deep_x.shape)
+        deep_y = self.deep_fc(deep_x.transpose(1, 2)).transpose(1, 2)
+#         deep_y = deep_y.reshape(deep_y.shape[0],-1,1)
+#         print('deep_y.shape',deep_y.shape)
+        # final fc
+        final_x = torch.cat((wide_y, deep_y), dim=1)
+        output = self.final_fc(final_x.transpose(1, 2))
+        output = self.log_softmax(output.transpose(1, 2)).view(-1,2)
+        return output

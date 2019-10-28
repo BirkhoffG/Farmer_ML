@@ -14,7 +14,7 @@ class ArrayDataset(TensorDataset):
         self.tensors = [torch.from_numpy(arr) for arr in arrs]
         assert all(self.tensors[0].size(0) == tensor.size(0) for tensor in self.tensors)
 
-    def data_loader(self, batch_size=128, shuffle=True, num_workers=4):
+    def data_loader(self, batch_size=128, shuffle=False, num_workers=4):
         return DataLoader(self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
 
